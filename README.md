@@ -1,6 +1,6 @@
 # Pravindu Bhashitha — Portfolio
 
-Personal portfolio built with React + Vite. Live at https://pravindu-bhashitha.github.io
+Personal portfolio built with React + Vite. Live at https://pravindu-bhashitha.github.io/Personal-Website/
 
 ## Editing
 
