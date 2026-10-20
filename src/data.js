@@ -22,6 +22,9 @@ export const profile = {
   photo,
   cv,
   openToWork: true,
+  // Contact form: get a free key at https://web3forms.com (sent to your email).
+  // Leave empty to fall back to opening the visitor's email app.
+  web3formsKey: 'a3a6015f-b2c2-4486-b627-7fdd77aac48f',
 }
 
 export const stats = [

@@ -3,15 +3,43 @@ import { profile } from '../data'
 import { GitHub, LinkedIn, Mail } from './Icons'
 import Section from './Section'
 
+const empty = { name: '', email: '', message: '' }
+
 export default function Contact() {
-  const [form, setForm] = useState({ name: '', email: '', message: '' })
+  const [form, setForm] = useState(empty)
+  const [status, setStatus] = useState('idle') // idle | sending | sent | error
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault()
-    const subject = encodeURIComponent(`Portfolio enquiry from ${form.name}`)
-    const body = encodeURIComponent(`${form.message}\n\n— ${form.name} (${form.email})`)
-    window.location.href = `mailto:${profile.email}?subject=${subject}&body=${body}`
+
+    if (!profile.web3formsKey) {
+      const subject = encodeURIComponent(`Portfolio enquiry from ${form.name}`)
+      const body = encodeURIComponent(`${form.message}\n\n— ${form.name} (${form.email})`)
+      window.location.href = `mailto:${profile.email}?subject=${subject}&body=${body}`
+      return
+    }
+
+    setStatus('sending')
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          access_key: profile.web3formsKey,
+          subject: `Portfolio enquiry from ${form.name}`,
+          from_name: 'Portfolio Website',
+          botcheck: e.target.botcheck.checked,
+          ...form,
+        }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.message)
+      setStatus('sent')
+      setForm(empty)
+    } catch {
+      setStatus('error')
+    }
   }
 
   const channels = [
@@ -42,6 +70,8 @@ export default function Contact() {
         </div>
 
         <form className="card contact-form" onSubmit={submit}>
+          {/* Honeypot: hidden from people, catches spam bots */}
+          <input type="checkbox" name="botcheck" className="botcheck" tabIndex="-1" autoComplete="off" />
           <label>
             Name
             <input value={form.name} onChange={set('name')} placeholder="Your name" required />
@@ -54,9 +84,19 @@ export default function Contact() {
             Message
             <textarea rows="5" value={form.message} onChange={set('message')} placeholder="Hi Pravindu, …" required />
           </label>
-          <button className="btn btn-primary full" type="submit">
-            Send message
+          <button className="btn btn-primary full" type="submit" disabled={status === 'sending'}>
+            {status === 'sending' ? 'Sending…' : 'Send message'}
           </button>
+          {status === 'sent' && (
+            <p className="form-note ok" role="status">
+              ✓ Thanks! Your message has been sent — I'll get back to you soon.
+            </p>
+          )}
+          {status === 'error' && (
+            <p className="form-note err" role="alert">
+              Something went wrong. Please email me directly at {profile.email}.
+            </p>
+          )}
         </form>
       </div>
     </Section>
